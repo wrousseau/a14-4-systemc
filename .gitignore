@@ -30,5 +30,5 @@
 # SystemC
 # Waveforms
 *.vcd
-bin/**
 doc/
+module_a14_tp1/bin/example
