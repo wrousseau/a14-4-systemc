@@ -1,0 +1,65 @@
+
+
+---------------------------------------------------------------------------------
+
+
+Simulation executed: Tue Sep 23 11:10:26 2014
+Elapsed time - overall simulation: 0:02 minutes
+Total simulated master system cycles: 181817 (363634 ns)
+CPU cycles simulated per second: 363634.0
+Elapsed time - processor 0 critical section: 0:00 minutes
+Elapsed time - processor 1 critical section: 0:00 minutes
+Elapsed time - processor 2 critical section: 0:00 minutes
+Elapsed time - processor 3 critical section: 0:00 minutes
+
+
+---------------------------------------------------------------------------------
+
+
+-----------------------
+Interconnect statistics
+-----------------------
+Overall exec time             = 0 master system cycles (0.00 ns)
+1-CPU average exec time       = 0 master system cycles (0 ns)
+Concurrent exec time          = 0 master system cycles (0.00 ns)
+Bus busy                      = 0 master system cycles (0.00% of 0)
+Bus transferring data         = 0 master system cycles (0.00% of 0, 0.00% of 0)
+Bus Accesses                  = 0 (0 SR, 0 SW, 0 BR, 0 BW: 0 R, 0 W)
+
+
+---------------------------------------------------------------------------------
+
+
+-----------------
+XBAR 0
+-----------------
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------
+
+

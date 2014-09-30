@@ -1,0 +1,400 @@
+
+;; Function rotate_slice (rotate_slice)
+
+
+OMP region tree
+
+bb 7: gimple_omp_parallel
+    bb 8: gimple_omp_for
+    bb 12: GIMPLE_OMP_CONTINUE
+    bb 13: GIMPLE_OMP_RETURN
+bb 14: GIMPLE_OMP_RETURN
+
+Merging blocks 7 and 20
+Merging blocks 7 and 15
+rotate_slice (int num_rotates, int slice_start, int slice_end)
+{
+  int D.2213;
+  int D.2211;
+  int D.2212;
+  int D.2208;
+  int D.2209;
+  int D.2210;
+  int D.2206;
+  int D.2207;
+  int .trip.21;
+  int .trip.20;
+  int D.2203;
+  int D.2202;
+  int D.2201;
+  int input_row;
+  int send.19;
+  int sstart.18;
+  char image_in;
+  char * input;
+  int j;
+  int input_col;
+  int input_row;
+  int i.9;
+  int i.8;
+  int row_offset.7;
+  int i.6;
+  int D.2170;
+  int D.2169;
+  int offset.5;
+  int i.4;
+  int D.2166;
+  int input_height.3;
+  int D.2164;
+  int input_width.2;
+  int D.2162;
+
+<bb 2>:
+  D.2162 = num_rotates % 4;
+  switch (D.2162) <default: <L3>, case 1: <L0>, case 2: <L1>, case 3: <L2>>
+
+<L0>:
+  input_width.2 = input_width;
+  D.2164 = input_width.2 + -1;
+  input_height.3 = input_height;
+  D.2166 = D.2164 * input_height.3;
+  i.4 = D.2166 + slice_start;
+  i = i.4;
+  row_offset = 1;
+  input_height.3 = input_height;
+  offset.5 = -input_height.3;
+  offset = offset.5;
+  goto <bb 7>;
+
+<L1>:
+  input_height.3 = input_height;
+  D.2169 = input_height.3 - slice_start;
+  input_width.2 = input_width;
+  D.2170 = D.2169 * input_width.2;
+  i.6 = D.2170 + -1;
+  i = i.6;
+  input_width.2 = input_width;
+  row_offset.7 = -input_width.2;
+  row_offset = row_offset.7;
+  offset = -1;
+  goto <bb 7>;
+
+<L2>:
+  input_height.3 = input_height;
+  D.2169 = input_height.3 - slice_start;
+  i.8 = D.2169 + -1;
+  i = i.8;
+  row_offset = -1;
+  input_height.3 = input_height;
+  offset = input_height.3;
+  goto <bb 7>;
+
+<L3>:
+  input_width.2 = input_width;
+  i.9 = input_width.2 * slice_start;
+  i = i.9;
+  input_width.2 = input_width;
+  row_offset = input_width.2;
+  offset = 1;
+
+<bb 7>:
+  sstart = slice_start;
+  send = slice_end;
+  __builtin_GOMP_parallel_start (rotate_slice.omp_fn.0, 0B, 0);
+  rotate_slice.omp_fn.0 (0B);
+  __builtin_GOMP_parallel_end ();
+  return;
+
+}
+
+
+
+;; Function Calc_crc8 (Calc_crc8)
+
+Calc_crc8 (char data, short int crc)
+{
+  char carry;
+  char x16;
+  char i;
+  short int D.2140;
+  signed char D.2133;
+  signed char D.2132;
+  signed char D.2131;
+  signed char D.2130;
+  signed char data.0;
+
+<bb 2>:
+  carry = 0;
+  x16 = carry;
+  i = x16;
+  i = 0;
+  goto <bb 10>;
+
+<bb 3>:
+  data.0 = (signed char) data;
+  D.2130 = data.0 & 1;
+  D.2131 = (signed char) crc;
+  D.2132 = D.2131 & 1;
+  D.2133 = D.2130 ^ D.2132;
+  x16 = (char) D.2133;
+  data = data >> 1;
+  if (x16 == 1)
+    goto <bb 4>;
+  else
+    goto <bb 5>;
+
+<bb 4>:
+  crc = crc ^ 16386;
+  carry = 1;
+  goto <bb 6>;
+
+<bb 5>:
+  carry = 0;
+
+<bb 6>:
+  crc = crc >> 1;
+  if (carry != 0)
+    goto <bb 7>;
+  else
+    goto <bb 8>;
+
+<bb 7>:
+  crc = crc | -32768;
+  goto <bb 9>;
+
+<bb 8>:
+  crc = crc & 32767;
+
+<bb 9>:
+  i = i + 1;
+
+<bb 10>:
+  if (i <= 7)
+    goto <bb 3>;
+  else
+    goto <bb 11>;
+
+<bb 11>:
+  D.2140 = crc;
+  return D.2140;
+
+}
+
+
+
+;; Function th_crcbuffer (th_crcbuffer)
+
+th_crcbuffer (const void * inbuf, int size, short int inputCRC)
+{
+  int i;
+  char * buf;
+  short int CRC;
+  int D.2153;
+  int D.2152;
+  char D.2151;
+  _Bool D.2148;
+  short int D.2147;
+  _Bool D.2144;
+  _Bool D.2143;
+  _Bool D.2142;
+
+<bb 2>:
+  CRC = inputCRC;
+  buf = (char *) inbuf;
+  D.2142 = buf == 0B;
+  D.2143 = size == 0;
+  D.2144 = D.2142 && D.2143;
+  if (D.2144 != 0)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  D.2147 = 0;
+  goto <bb 10>;
+
+<bb 4>:
+  D.2142 = buf == 0B;
+  D.2143 = size == 0;
+  D.2148 = D.2142 || D.2143;
+  if (D.2148 != 0)
+    goto <bb 5>;
+  else
+    goto <bb 6>;
+
+<bb 5>:
+  D.2147 = 0;
+  goto <bb 10>;
+
+<bb 6>:
+  i = 0;
+  goto <bb 8>;
+
+<bb 7>:
+  D.2151 = *buf;
+  D.2152 = (int) D.2151;
+  D.2153 = (int) CRC;
+  CRC = Calc_crc8 (D.2152, D.2153);
+  buf = buf + 1;
+  i = i + 1;
+
+<bb 8>:
+  if (i < size)
+    goto <bb 7>;
+  else
+    goto <bb 9>;
+
+<bb 9>:
+  D.2147 = CRC;
+
+<bb 10>:
+  return D.2147;
+
+}
+
+
+
+;; Function _app_main (_app_main)
+
+_app_main ()
+{
+  short int crc;
+  int D.2160;
+  long unsigned int D.2158;
+  int input_height.1;
+
+<bb 2>:
+  input_height.1 = input_height;
+  rotate_slice (2, 0, input_height.1);
+  pr (&"Computing CHECKSUM..", 0, 66);
+  crc = th_crcbuffer (&output, 33823, 0);
+  if (crc != 2984)
+    goto <bb 3>;
+  else
+    goto <bb 4>;
+
+<bb 3>:
+  D.2158 = (long unsigned int) crc;
+  pr (&"ROTATE FAIL: CRC =", D.2158, 6);
+  pr (&"Expected", 2984, 70);
+  goto <bb 5>;
+
+<bb 4>:
+  pr (&"ROTATE SUCCESS!", 0, 66);
+
+<bb 5>:
+  D.2160 = 0;
+  return D.2160;
+
+}
+
+
+
+;; Function rotate_slice.omp_fn.0 (rotate_slice.omp_fn.0)
+
+rotate_slice.omp_fn.0 (void * .omp_data_i)
+{
+  int offset.16;
+  char * D.2242;
+  long unsigned int j.15;
+  char image_in;
+  int input_col;
+  int j;
+  int i.14;
+  int D.2236;
+  int row_offset.13;
+  char * input;
+  long unsigned int D.2233;
+  int D.2232;
+  int input_width.12;
+  int D.2230;
+  int input_row;
+  int D.2228;
+  int D.2227;
+  int D.2226;
+  int D.2225;
+  int D.2224;
+  int D.2223;
+  int D.2222;
+  int .trip.21;
+  int D.2220;
+  int D.2219;
+  int D.2218;
+  int send.19;
+  int sstart.18;
+  int send.11;
+  int sstart.10;
+
+<bb 2>:
+  sstart.10 = sstart;
+  send.11 = send;
+  sstart.18 = sstart.10;
+  send.19 = send.11;
+  D.2218 = __builtin_omp_get_num_threads ();
+  D.2219 = __builtin_omp_get_thread_num ();
+  D.2220 = send.19 - sstart.18;
+  .trip.21 = 0;
+  D.2222 = D.2219 * 10;
+  D.2223 = D.2222 + sstart.18;
+
+<bb 3>:
+  D.2224 = .trip.21 * D.2218;
+  D.2225 = D.2224 + D.2219;
+  D.2226 = D.2225 * 10;
+  D.2227 = D.2226 + 10;
+  D.2228 = MIN_EXPR <D.2227, D.2220>;
+  if (D.2226 < D.2220)
+    goto <bb 4>;
+  else
+    goto <bb 10>;
+
+<bb 4>:
+  input_row = D.2226 + sstart.18;
+  D.2230 = D.2228 + sstart.18;
+
+<bb 5>:
+  input_width.12 = input_width;
+  D.2232 = input_row * input_width.12;
+  D.2233 = (long unsigned int) D.2232;
+  input = &input_image + D.2233;
+  row_offset.13 = row_offset;
+  D.2236 = row_offset.13 * input_row;
+  i.14 = i;
+  j = D.2236 + i.14;
+  input_col = 0;
+
+<bb 6>:
+  input_width.12 = input_width;
+  if (input_col < input_width.12)
+    goto <bb 9>;
+  else
+    goto <bb 7>;
+
+<bb 7>:
+  input_row = input_row + 1;
+  if (input_row < D.2230)
+    goto <bb 5>;
+  else
+    goto <bb 8>;
+
+<bb 8>:
+  .trip.21 = .trip.21 + 1;
+  goto <bb 3>;
+
+<bb 9>:
+  image_in = *input;
+  input = input + 1;
+  j.15 = (long unsigned int) j;
+  D.2242 = &output + j.15;
+  *D.2242 = image_in;
+  offset.16 = offset;
+  j = j + offset.16;
+  input_col = input_col + 1;
+  goto <bb 6>;
+
+<bb 10>:
+  return;
+
+}
+
+

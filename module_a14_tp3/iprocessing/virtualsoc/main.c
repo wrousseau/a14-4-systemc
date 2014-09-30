@@ -1,6 +1,6 @@
 
 #include <stdlib.h>
-#include "./images/input_image.h"
+#include "../images/input_image.h"
 #include "image_functions.h"
 
 #include "appsupport.h"

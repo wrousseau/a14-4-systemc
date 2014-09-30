@@ -20,7 +20,7 @@ DEFAULTFLAGS  = -DMAKEFILE_DEFAULT_CURRENT_ISS=ARMv6 -DMAKEFILE_DEFAULT_CURRENT_
                 -DMAKEFILE_DEFAULT_L3_MUX_STATIC_MAP=false -DMAKEFILE_TRACE_ISS=false 
 
 ### for debugging purposes: -O0 -g
-OPT           = -Wall -Wno-deprecated -fexceptions -O0 -g -DQUIET -DTRACELEVEL=0 #-pg
+OPT           = -Wall -Wno-deprecated -fexceptions -O3 -DQUIET -DTRACELEVEL=0 #-pg
 
 ############## Enable -pg for executable profiling
 

@@ -1,0 +1,6 @@
+cache_storagetypes.o cache_storagetypes.dpp : \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_storagetypes.cpp \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_storagetypes.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_config.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/globals.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/config.h
