@@ -3,6 +3,7 @@
 
 #include "appsupport.h"
 #include "config.h"
+#include <stdint.h>
 
 void counter_init ();
 void counter_get ();

@@ -3,11 +3,11 @@
 * Written by Martin Mares <mj@atrey.karlin.mff.cuni.cz>
 */
 
-STACK_TOP = 0x0803EFFC;
+STACK_TOP = 0x0805FFFC; /*0x0803EFFC;*/
 
 MEMORY
 {
-    LOCAL_SHARED (wI) : ORIGIN = 0x0803F000, LENGTH = 4K 
+    LOCAL_SHARED (wI) : ORIGIN = 0x08060000, LENGTH = 128K /*was 0x0803F000*/
     GLOBAL_SHARED (wx) : ORIGIN = 0x0, LENGTH = 256M
 }
 

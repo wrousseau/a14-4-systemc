@@ -80,7 +80,7 @@ $(EXE): $(OBJS)
 all: $(EXE)
 
 run:
-	vsoc.x --tb=32 -c4 --intc=c
+	vsoc.x --tb=32 -c4 --intc=c -a -s
 
 clean:
 	rm -f *.o *.dis *~ stats.txt stats_light.txt TargetMem_*
