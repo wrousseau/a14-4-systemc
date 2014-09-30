@@ -1,0 +1,8 @@
+cache_RPU.o cache_RPU.dpp : \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_RPU.cpp \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_RPU.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_storagetypes.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_config.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/globals.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/config.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_address.h

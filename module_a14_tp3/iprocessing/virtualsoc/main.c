@@ -1,6 +1,6 @@
 
 #include <stdlib.h>
-#include "./images/input_image.h"
+#include "../images/input_image.h"
 #include "image_functions.h"
 
 #include "appsupport.h"
@@ -17,6 +17,9 @@
 //Global variables in local shared
 static unsigned char ImageOut1 [IMAGE_Y*IMAGE_X];
 static unsigned char ImageOut2 [IMAGE_Y*IMAGE_X];
+
+extern unsigned char histogram[256] LOCAL_SHARED;
+
 
 int main ()
 {

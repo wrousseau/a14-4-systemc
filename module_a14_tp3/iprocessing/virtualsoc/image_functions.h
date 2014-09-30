@@ -16,6 +16,9 @@
 
 #define KERNEL_SIZE 3
 
+unsigned char histogram[256] LOCAL_SHARED;
+
+
 void
 inline
 swap(unsigned char array[], int i, int j)
@@ -54,12 +57,24 @@ quickSort(unsigned char array[], int begin, int end)
     }
 }
 
+void insertSort(unsigned char array[], short begin, short end) {
+  short i, k;
+  for (i = begin+1; i <= end; i++) {
+    k = i;
+    while (k > begin && array[k-1] > array[k]) {
+      swap(array, k, k-1);
+      k--;
+    }
+  }
+}
+
 unsigned char
 inline
 computeMedian(unsigned char array[])
 {
-    quickSort(array, 0, 8);
-    return array[4];
+  //quickSort(array, 0, 8);
+  insertSort(array, 0, 8);
+  return array[4];
 }
 
 //median
@@ -67,29 +82,29 @@ void
 inline
 median (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
 {
-    //Local variables
-    unsigned int c,d;
-    int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+  //Local variables
+  int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+  unsigned int c, d, acc = half_kernel_size*size_x;
 
     unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
 
-    for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
+    for ( c=half_kernel_size; c < (size_y-half_kernel_size); c++ )
     {
         for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
-        {             
-            inputBlock[0] = *(ImageIn+(c-1)*size_x+d-1);
-            inputBlock[1] = *(ImageIn+c*size_x+d-1);      
-            inputBlock[2] = *(ImageIn+(c+1)*size_x+d-1);      
-            inputBlock[3] = *(ImageIn+(c-1)*size_x+d);      
-            inputBlock[4] = *(ImageIn+c*size_x+d);      
-            inputBlock[5] = *(ImageIn+(c+1)*size_x+d);      
-            inputBlock[6] = *(ImageIn+(c-1)*size_x+d+1);      
-            inputBlock[7] = *(ImageIn+c*size_x+d+1);      
-            inputBlock[8] = *(ImageIn+(c+1)*size_x+d+1);      
+        {
+            inputBlock[0] = *(ImageIn+acc-size_x+d-1);
+            inputBlock[1] = *(ImageIn+acc+d-1);
+            inputBlock[2] = *(ImageIn+acc+size_x+d-1);
+            inputBlock[3] = *(ImageIn+acc-size_x+d);
+            inputBlock[4] = *(ImageIn+acc+d);
+            inputBlock[5] = *(ImageIn+acc+size_x+d);
+            inputBlock[6] = *(ImageIn+acc-size_x+d+1);
+            inputBlock[7] = *(ImageIn+acc+d+1);
+            inputBlock[8] = *(ImageIn+acc+size_x+d+1);
 
-            *(ImageOut+c*size_x+d) = computeMedian(inputBlock);
-
+            *(ImageOut+acc+d) = computeMedian(inputBlock);
         }
+        acc += size_x;
     }
 }
 
@@ -103,8 +118,6 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
 
     unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
-
-    unsigned char histogram[256];
 
     int limit = KERNEL_SIZE*KERNEL_SIZE/2;
 
@@ -163,12 +176,11 @@ void
 inline
 threshold_equ(unsigned char *imageIn, unsigned int size_x, unsigned int size_y, unsigned char max)
 {
-    //Does nothing
-    int i;
+    unsigned int i;
     for(i=0; i<size_x*size_y; i++)
     {
-        unsigned char pixel = *(imageIn+i);
-        *(imageIn+i)=(pixel>=100) ? pixel : 0; 
+      if (*(imageIn+i) < 100)
+        *(imageIn+i) = 0; 
     } 
 }
 
@@ -178,8 +190,9 @@ inline
 sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
 {
     //Local variables
-    unsigned int c,d;
+
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+    unsigned int c, d, acc = half_kernel_size*size_x;
 
     unsigned char topLeft, top, topRight, left, right, bottomLeft, bottom, bottomRight;
     //Compute
@@ -187,20 +200,22 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
     {
         for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
         {
-            topLeft = *(ImageIn+(c-1)*size_x+d-1);
-            top = *(ImageIn+(c-1)*size_x+d);
-            topRight = *(ImageIn+(c-1)*size_x+d+1);
-            left = *(ImageIn+c*size_x+d-1);
-            right = *(ImageIn+c*size_x+d+1);
-            bottomLeft = *(ImageIn+(c+1)*size_x+d-1);
-            bottom = *(ImageIn+(c+1)*size_x+d);
-            bottomRight = *(ImageIn+(c+1)*size_x+d+1);
+            topLeft = *(ImageIn+acc-size_x+d-1);
+            top = *(ImageIn+acc-size_x+d);
+            topRight = *(ImageIn+acc-size_x+d+1);
+            left = *(ImageIn+acc+d-1);
+            right = *(ImageIn+acc+d+1);
+            bottomLeft = *(ImageIn+acc+size_x+d-1);
+            bottom = *(ImageIn+acc+size_x+d);
+            bottomRight = *(ImageIn+acc+size_x+d+1);
             int horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
             int vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
             int temp = abs(horizontal)+abs(vertical);
             unsigned char result = (temp > 255) ? 255 : temp;
-            *(ImageOut+c*size_x+d) = result;
+
+            *(ImageOut+acc+d) = result;
         }
+        acc += size_x;
     }
 }
 

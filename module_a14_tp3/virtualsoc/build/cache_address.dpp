@@ -1,0 +1,6 @@
+cache_address.o cache_address.dpp : \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_address.cpp \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_address.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/cache_config.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/globals.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/config.h

@@ -1,0 +1,4 @@
+globals.o globals.dpp : \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/globals.cpp \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/globals.h \
+ /home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/config.h
