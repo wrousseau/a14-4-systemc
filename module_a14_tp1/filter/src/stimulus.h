@@ -6,22 +6,35 @@
 SC_MODULE(stimulus) 
 {
 protected :
-  unsigned char * ImageRes;
+  unsigned char * processedImage;
 
 public :
-  sc_in <bool> data_in_ready;
-  sc_out<bool> data_out_ready;	
-  sc_out<bool> oen;
-  sc_out<bool> wen;
-  sc_out< int > addr;
-  sc_inout< unsigned char > data;
+  enum State {INIT, SEND, READY, WAIT, READ, END};
+
+  // Send Process
+  sc_in <bool> dataInReady;
+  sc_out<bool> sendProcessOen;
+  sc_out<bool> sendProcessWen;
+  sc_out<int> sendProcessAddr;
+  sc_out<unsigned char> originalData;
+
+  State sendProcessState;
+  State sendProcessNextState;
+
+  // Read Process
+  sc_out<bool> dataOutReady;  
+  sc_out<bool> readProcessOen;
+  sc_out<bool> readProcessWen;
+  sc_out<int> readProcessAddr;
+  sc_in<unsigned char> processedData;
+
+  State readProcessState;
+  State readProcessNextState;
+
   sc_in_clk clock;
 
-  enum State {INIT, SEND, READY, WAIT, READ, END};
-  State state;
-  State next_state;
-
-  void do_process(); 
+  void sendProcess();
+  void readProcess(); 
 	
   stimulus(sc_module_name name);
   SC_HAS_PROCESS(stimulus);

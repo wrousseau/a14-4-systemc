@@ -26,6 +26,8 @@
 *.exe
 *.out
 *.app
+iprocessing
+.nfs*
 
 # SystemC
 # Waveforms
@@ -33,3 +35,4 @@
 doc/
 module_a14_tp1/bin/example
 output.pgm
+results.pgm

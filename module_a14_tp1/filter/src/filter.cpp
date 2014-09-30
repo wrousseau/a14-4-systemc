@@ -1,53 +1,23 @@
 #include "filter.h"
 
-//do_filter
+//doFilter
 void 
-filter::do_filter()
+filter::doFilter()
 {
   while(1)
   {
     wait();
 
     //Check the address
-    if(addr==0x20000000) 
+    if(readProcessAddr==0x80000000) 
     {
-      //Write
-      if(oen && !wen) 
-      {
-        if(!mem->nb_write(data)) 
-        {
-         cout<<"[filter]: internal fifo is too small (size="<<mem->num_free()<<")."<<endl;
-         exit(-1);
-        }
-      }
-
-      //Read
-      else if(!oen && wen) 
-      {
-        unsigned char value;
-        if(!mem->nb_read(value)) 
-        {
-          cout<<"[filter]: internal fifo is empty."<<endl; 
-        }
-        else data = value;
-      }
-
-      //Main processing
-      else if(data_in_ready.read())
-      {
-        //We have received all the data.
-        //Processing can start
-        cout<<"[filter]: start processing."<<endl;
-        wait(100);
-        cout<<"[filter]: done."<<endl;
-        data_out_ready.write(true);
-      }
-
-      //Init
-      else if(!data_in_ready.read())
-      {
-        data_out_ready.write(false);
-      }
+      int res = centerDin.read()-verticalSumDin.read()-horizontalSumDin.read();
+      if (res < 0)
+        res = 0;
+      else if (res > 255)
+        res = 255;
+      processedData.write(res);
+      dataOutReady.write(true);
     }
     else 
     {
@@ -60,8 +30,9 @@ filter::do_filter()
 //Constructor
 filter::filter(sc_module_name name):sc_module(name)
 {
-  mem = new sc_fifo<unsigned char> ("mem", 600*600);
-  SC_THREAD(do_filter);
+  //mem = new sc_fifo<unsigned char> ("mem", 600*600);
+
+  SC_THREAD(doFilter);
   dont_initialize();
   sensitive << clock.pos();
 }
@@ -69,7 +40,7 @@ filter::filter(sc_module_name name):sc_module(name)
 
 //Destructor
 filter::~filter() {
-  delete mem;
+  //delete mem;
 }
 
 

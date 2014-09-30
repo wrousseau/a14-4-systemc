@@ -3,27 +3,33 @@
 #include "input_image.h"
 
 
-//Constructor
+// Constructor
 stimulus::stimulus(sc_module_name name):sc_module(name)
 {
-  ImageRes = new unsigned char [IMAGE_X*IMAGE_Y];
-  state = INIT;
-  next_state = INIT;
+  processedImage = new unsigned char [IMAGE_X*IMAGE_Y];
+  sendProcessState = INIT;
+  sendProcessNextState = INIT;
+  readProcessState = INIT;
+  readProcessNextState = INIT;
 
-  SC_THREAD(do_process);
+  SC_THREAD(sendProcess);
+  dont_initialize();
+  sensitive << clock.pos();
+
+  SC_THREAD(readProcess);
   dont_initialize();
   sensitive << clock.pos();
 }
 
 
-//Destructor
+// Destructor
 stimulus::~stimulus(){
-  delete [] ImageRes;
+  delete [] processedImage;
 }
 
 
-//Main thread
-void stimulus::do_process() 
+// Send thread
+void stimulus::sendProcess() 
 {
   //Local variables
   static unsigned int i=0;
@@ -31,82 +37,122 @@ void stimulus::do_process()
   while(1)
   {
     wait();
-  
-    //FSM
-    switch(state)
-    {
-      //INIT
-      case(INIT):{
-        wen.write(true);
-        oen.write(true);
-        addr.write(0x20000000);
 
-        next_state = SEND;
+    // FSM
+    switch(sendProcessState)
+    {
+      // INIT
+      case(INIT):{
+        sendProcessWen.write(true);
+        sendProcessOen.write(true);
+        sendProcessAddr.write(0x20000000);
+
+        sendProcessNextState = SEND;
         cout<<"[stimulus]: send image...";
         i=0;
       }
       break;
 
-      //SEND
+      // SEND
       case(SEND):{
-        data.write(MyImage[i]);
-        wen.write(false);  
+        originalData.write(MyImage[i]);
+        sendProcessWen.write(false);  
         i++;
-        if(i<IMAGE_X*IMAGE_Y) next_state = SEND; 
+        if(i<IMAGE_X*IMAGE_Y) sendProcessNextState = SEND; 
         else {
-          next_state = READY;
-          cout<<"done."<<endl;
+          sendProcessWen.write(true);
+          sendProcessNextState = END;
         }
       }
       break;
 
-      //READY
-      case(READY):{
-        wen.write(true);
-        data_out_ready.write(true);
-        next_state = WAIT;
-        cout<<"[stimulus]: wait for processing..."<<endl;
+      // END
+      case(END):{
+        cout<<"Done."<<endl;
+        //sc_stop();
       }
       break;
 
-      //WAIT
+      
+    }
+
+    sendProcessState = sendProcessNextState;
+  }
+}
+
+void stimulus::readProcess()
+{
+  //Local variables
+  static unsigned int i=0;
+
+  while (1)
+  {
+    wait();
+
+    switch (readProcessState)
+    {
+      // INIT
+      case(INIT):{
+        readProcessWen.write(true);
+        readProcessOen.write(true);
+        readProcessAddr.write(0x80000000);
+
+        readProcessNextState = WAIT;
+        cout<<"[stimulus]: read image...";
+        i=0;
+      }
+      break;
+
+      /*// READY
+      case(READY):{
+        //dataOutReady.write(true);
+        readProcessNextState = WAIT;
+        cout<<"[stimulus]: wait for processing..."<<endl;
+      }
+      break;
+*/
+      // WAIT
       case(WAIT):{
-        data_out_ready.write(false);
-        if(!data_in_ready.read()) next_state=WAIT;
+        //dataOutReady.write(false);
+        if(!dataInReady.read()) readProcessNextState=WAIT;
         else {
-          next_state = READ;
-          cout<<"[stimulus]: done."<<endl;
-          cout<<"[stimulus]: get new data...";
-          oen.write(false);
+          readProcessNextState = READ;
+          cout << "[stimulus]: done." << endl;
+          cout << "[stimulus]: get new data...";
+          readProcessOen.write(false);
           i=0;
         }
       }
       break;
 
-      //READ
+      // READ
       case(READ):{
-        ImageRes[i] = data;
+        processedImage[i] = processedData;
         i++;
-        if(i<IMAGE_X*IMAGE_Y) next_state = READ; 
+        if(i<IMAGE_X*IMAGE_Y) readProcessNextState = READ; 
         else {
-          next_state = END;
-          oen.write(true);
-          cout<<"done."<<endl;
+          readProcessNextState = END;
+          readProcessOen.write(true);
         }
       }
       break;
 
-      //END
+      // END
       case(END):{
-        pgmWrite("output.pgm", IMAGE_X, IMAGE_Y, ImageRes);
+        cout << "Ending..." << endl;
+        pgmWrite("output.pgm", IMAGE_X, IMAGE_Y, processedImage);
         cout<<"Done."<<endl;
+        cout << sc_time_stamp() << endl;
         sc_stop();
       }
       break;
     }
 
-    state = next_state;
+    readProcessState = readProcessNextState;
+
+
   }
+  
 }
 
 

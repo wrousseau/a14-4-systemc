@@ -21,7 +21,7 @@ int sc_main (int argc , char *argv[])
 	stimulus1.din(din); 
 	stimulus1.clock(clock);
 
-	shifter shifter_module("shifter_module");
+	shifter shifter_module("shifter_module", 8);
 	shifter_module.din(din);
 	shifter_module.dout(dout);
 	shifter_module.clock(clock);

@@ -2,23 +2,27 @@
 #define FILTER_H
 
 #include "systemc.h"
+#include "input_image.h"
 
 SC_MODULE(filter)
 {
 public:
-  sc_in <bool> data_in_ready;
-  sc_out<bool> data_out_ready;
-  sc_in <bool> oen;
-  sc_in <bool> wen;
-  sc_in < int > addr;
-  sc_inout< unsigned char > data;
+  // Send Process
+  sc_in<int> verticalSumDin;
+  sc_in<int> horizontalSumDin;
+  sc_in<int> centerDin;
+  sc_in<int> readProcessAddr;
+  sc_out<unsigned char> processedData;
+
+  sc_in <bool> dataInReady;
+  sc_out <bool> dataOutReady;
+
   sc_in_clk clock;
 
-  //variable interne
   sc_fifo<unsigned char> * mem;
-
+  
   //Methods
-  void do_filter();
+  void doFilter();
 	
   //Constructor
   filter(sc_module_name name);

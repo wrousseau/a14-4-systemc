@@ -2,6 +2,7 @@
 #include "stimulus.h"
 #include "display.h"
 #include "filter.h"
+#include "shifter.h"
 
 int sc_main (int argc , char *argv[]) 
 {
@@ -11,44 +12,66 @@ int sc_main (int argc , char *argv[])
   vcd_trace_file *output_debug;
 	
   //Signals
-  sc_signal <bool> data_in_ready;
-  sc_signal <bool> data_out_ready;	
-  sc_signal <bool> oen;
-  sc_signal <bool> wen;
-  sc_signal <int > addr;
-  sc_signal < unsigned char > data;
+  sc_signal <bool> dataInReady;
+  sc_signal <bool> dataOutReady;	
+  sc_signal <bool> sendProcessOen;
+  sc_signal <bool> sendProcessWen;
+  sc_signal <int> sendProcessAddr;
+  sc_signal <unsigned char> originalData;
+  sc_signal <bool> readProcessOen;
+  sc_signal <bool> readProcessWen;
+  sc_signal <int> readProcessAddr;
+  sc_signal <unsigned char> processedData;
+
+  sc_signal <int> verticalSum;
+  sc_signal <int> horizontalSum;
+  sc_signal <int> center;
+
   sc_clock clock;
 
   //Trace file
   output_debug = (vcd_trace_file*) (sc_create_vcd_trace_file("./wave/waveform"));
 
   //Binding
-  stimulus stimulus1("stimulus1");
-  stimulus1.data_in_ready(data_in_ready);
-  stimulus1.data_out_ready(data_out_ready);
-  stimulus1.addr(addr); 
-  stimulus1.data(data); 
-  stimulus1.oen(oen); 
-  stimulus1.wen(wen); 
-  stimulus1.clock(clock);
+  stimulus stimulus("stimulus");
+  stimulus.dataInReady(dataInReady);
+  stimulus.dataOutReady(dataOutReady);
+  stimulus.sendProcessAddr(sendProcessAddr); 
+  stimulus.sendProcessOen(sendProcessOen); 
+  stimulus.sendProcessWen(sendProcessWen);
+  stimulus.readProcessAddr(readProcessAddr); 
+  stimulus.readProcessOen(readProcessOen); 
+  stimulus.readProcessWen(readProcessWen);
+  stimulus.originalData(originalData);
+  stimulus.processedData(processedData); 
+  stimulus.clock(clock);
 
-  filter filter_module("filter_module");
-  filter_module.data_out_ready(data_in_ready);
-  filter_module.data_in_ready(data_out_ready);
-  filter_module.addr(addr);
-  filter_module.data(data); 
-  filter_module.oen(oen); 
-  filter_module.wen(wen); 
-  filter_module.clock(clock);
+  shifter<unsigned char, int> shifterModule("shifterModule", 2*IMAGE_X+3);
+  shifterModule.din(originalData);
+  shifterModule.verticalSumDout(verticalSum);
+  shifterModule.horizontalSumDout(horizontalSum);
+  shifterModule.centerDout(center);
+  shifterModule.clock(clock);
 
-  display display1("display1",output_debug);
-  display1.data_out_ready(data_out_ready);
-  display1.data_in_ready(data_in_ready);
-  display1.addr(addr);
-  display1.data(data); 
-  display1.oen(oen); 
-  display1.wen(wen); 
-  display1.clock(clock);
+  filter filterModule("filterModule");
+  filterModule.dataOutReady(dataInReady);
+  filterModule.dataInReady(dataOutReady);
+  filterModule.verticalSumDin(verticalSum);
+  filterModule.horizontalSumDin(horizontalSum);
+  filterModule.centerDin(center);
+  filterModule.readProcessAddr(readProcessAddr); 
+  filterModule.processedData(processedData); 
+  filterModule.clock(clock);
+
+  display displayModule("displayModule",output_debug);
+  //displayModule.dataOutReady(dataOutReady);
+  //displayModule.dataInReady(dataInReady);
+  //displayModule.addr(addr);
+  displayModule.originalData(originalData); 
+  displayModule.processedData(processedData); 
+  //displayModule.oen(oen); 
+  //displayModule.wen(wen); 
+  displayModule.clock(clock);
 
   //Simulation
   sc_start(-1);
