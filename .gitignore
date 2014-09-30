@@ -26,7 +26,9 @@
 *.exe
 *.out
 *.app
-iprocessing
+module_a14_tp3/iprocessing/x86/iprocessing
+module_a14_tp3/iprocessing/virtualsoc/iprocessing
+
 .nfs*
 
 # SystemC
