@@ -119,6 +119,39 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
     //Compute
     for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
     {
+        for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
+        {
+            topLeft = *(ImageIn+(c-1)*size_x+d-1);
+            top = *(ImageIn+(c-1)*size_x+d);
+            topRight = *(ImageIn+(c-1)*size_x+d+1);
+            left = *(ImageIn+c*size_x+d-1);
+            right = *(ImageIn+c*size_x+d+1);
+            bottomLeft = *(ImageIn+(c+1)*size_x+d-1);
+            bottom = *(ImageIn+(c+1)*size_x+d);
+            bottomRight = *(ImageIn+(c+1)*size_x+d+1);
+            int horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
+            int vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
+            int temp = abs(horizontal)+abs(vertical);
+            unsigned char result = (temp > 255) ? 255 : temp;
+            *(ImageOut+c*size_x+d) = result;
+        }
+    }
+}
+
+//Sobel
+void
+inline
+optiSobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
+{
+    //Local variables
+    unsigned int c,d;
+    int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+
+    unsigned char topLeft, top, topRight, left, right, bottomLeft, bottom, bottomRight, result;
+    int horizontal, vertical, temp;
+    //Compute
+    for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
+    {
         topLeft = *(ImageIn+(c-1)*size_x+half_kernel_size-1);
         top = *(ImageIn+(c-1)*size_x+half_kernel_size);
         topRight = *(ImageIn+(c-1)*size_x+half_kernel_size+1);
@@ -127,6 +160,12 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
         bottomLeft = *(ImageIn+(c+1)*size_x+half_kernel_size-1);
         bottom = *(ImageIn+(c+1)*size_x+half_kernel_size);
         bottomRight = *(ImageIn+(c+1)*size_x+half_kernel_size+1);
+        horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
+        vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
+        temp = abs(horizontal)+abs(vertical);
+        result = (temp > 255) ? 255 : temp;
+        *(ImageOut+c*size_x+half_kernel_size) = result;
+
         for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
         {
             topLeft = top;
@@ -137,11 +176,10 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
             left = *(ImageIn+c*size_x+d-1);
             right = *(ImageIn+c*size_x+d+1);
             bottomRight = *(ImageIn+(c+1)*size_x+d+1);
-            unsigned char horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
-            unsigned char vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
-            unsigned char result = abs(horizontal)+abs(vertical);
-            result = (result > 255) ? 255 : result;
-            result = (result < 0) ? 0 : result;
+            horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
+            vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
+            temp = abs(horizontal)+abs(vertical);
+            result = (temp > 255) ? 255 : temp;
             *(ImageOut+c*size_x+d) = result;
         }
     }
