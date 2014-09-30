@@ -27,6 +27,8 @@
 
 #include "cl_platform_defs.h"
 
+#include "cl_counter.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -56,6 +58,7 @@ SC_MODULE(cl_platform_prv) {
     cl_1st_stage_demux* dma_int_demux;
     cl_1st_stage_demux* dma_ext_demux;
     cl_semaphore *sem;
+    cl_counter *counter;
     cl_output_mem* outm;
 
     void stats();
@@ -120,6 +123,11 @@ SC_MODULE(cl_platform_prv) {
     sc_signal<PINOUT>   *pinout_hws_slv_port;
     sc_signal<bool>     *request_hws_slv_port;
     sc_signal<bool>     *ready_hws_slv_port;
+
+    //Counter
+    sc_signal<PINOUT> pinout_counter_slv_port;
+    sc_signal<bool> request_counter_slv_port;
+    sc_signal<bool> ready_counter_slv_port;
     
     //Signals from PIC to OUTPUT MEM
     sc_signal<PINOUT>   pinout_outm_slv_port;
@@ -344,7 +352,7 @@ SC_MODULE(cl_platform_prv) {
 
       // --------------- Peripheral INTC -----------------
       sprintf(buffer, "pic");   
-      pic = new cl_pic(buffer, 0, N_CORES + 2, N_CORES + 2 + N_HWS_PORTS + N_OUTM_PORTS + 1 + 1, XBAR_TCDM_DELAY, XBAR_TCDM_SCHED, tf, tracing);
+      pic = new cl_pic(buffer, 0, N_CORES + 2, N_CORES + 2 + N_HWS_PORTS + N_OUTM_PORTS + 1 + 1 + N_COUNTER_PORTS, XBAR_TCDM_DELAY, XBAR_TCDM_SCHED, tf, tracing);
       pic->clock(ClockGen_1);
       //wiring cores to pic
       for(i = 0; i < N_CORES+2; i++)
@@ -391,6 +399,9 @@ SC_MODULE(cl_platform_prv) {
       pic->pinout_slave[N_CORES+2 + N_HWS_PORTS + N_OUTM_PORTS + 1](pinout_dma_slv);
       
       //wiring pic to COUNTER
+      pic->request_slave[N_CORES+2 + N_HWS_PORTS + N_OUTM_PORTS + 2](request_counter_slv_port);
+      pic->ready_slave[N_CORES+2 + N_HWS_PORTS + N_OUTM_PORTS + 2](ready_counter_slv_port);
+      pic->pinout_slave[N_CORES+2 + N_HWS_PORTS + N_OUTM_PORTS + 2](pinout_counter_slv_port);
 
       //wiring pic to ACC
       
@@ -415,7 +426,12 @@ SC_MODULE(cl_platform_prv) {
 
       // --------------- ACC ----------------
       // --------------- COUNTER ----------------
-
+      sprintf(buffer, "COUNTER");
+      counter = new cl_counter(buffer, 0x0, COUNTER_BASE_ADDR, COUNTER_MEM_SIZE);
+      counter->clock(ClockGen_1);
+      counter->slave_port(pinout_counter_slv_port);
+      counter->sl_rdy(ready_counter_slv_port);
+      counter->sl_req(request_counter_slv_port);
       // --------------- OUTM ----------------
       sprintf(buffer, "OUTM");
       cl_output_mem* outm = new cl_output_mem(buffer, 0x0, OUTPUT_MEM_BASE_ADDR, OUTPUT_MEM_MEM_SIZE);
@@ -840,6 +856,8 @@ SC_MODULE(cl_platform_prv) {
 	    delete CRU;
 
 	    delete sem;
+
+      delete counter;
 
 	}
 

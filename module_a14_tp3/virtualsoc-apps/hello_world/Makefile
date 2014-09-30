@@ -14,9 +14,9 @@ OBJCOPY   = arm-elf-objcopy
 OBJDUMP   = arm-elf-objdump
 OPT       = -O2 -g
 
-ifndef VSOC_ROOT_DIR
-  $(error Fatal error: Undefined VSOC_ROOT_DIR environment variable!)
-endif
+#ifndef VSOC_ROOT_DIR
+#  $(error Fatal error: Undefined VSOC_ROOT_DIR environment variable!)
+#endif
 
 ############## Initialization of global includes and libs
 INCDIR       = -I. -I.. -I${VSOC_SRC_DIR}/core -I${VSOC_APP_DIR}/support/simulator
@@ -27,7 +27,7 @@ ASFLAGS      = -mfpu=softfpa
 VPATH       += ${VSOC_APP_DIR}/support/simulator
 
 ############## Initialization of source and object files
-CSRCS  += ${VSOC_APP_DIR}/support/simulator/appsupport.c hello_world.c 
+CSRCS  += ${VSOC_APP_DIR}/support/simulator/appsupport.c hello_world.c ${VSOC_APP_DIR}/support/simulator/countersupport.c
 
 ASSRCS = ${VSOC_APP_DIR}/support/simulator/boot.s
 COBJS  = $(CSRCS:.c=.o)

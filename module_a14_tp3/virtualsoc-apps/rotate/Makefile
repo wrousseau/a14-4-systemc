@@ -1,6 +1,6 @@
-ifndef VSOC_ROOT_DIR
-    $(error VSOC_ROOT_DIR is undefined)
-endif
+#ifndef VSOC_ROOT_DIR
+#    $(error VSOC_ROOT_DIR is undefined)
+#endif
 
 #BUILD_TYPE ?= HWS_BARS
 SRCS_OMP := rot.c
@@ -8,7 +8,7 @@ SRCS_OMP := rot.c
 APP_FLAGS = -DCROP_IMAGE=${CROP_IMAGE} \
 	    -DPRIVATIZE_WORK_COUNTER=${PRIVATIZE_WORK_COUNTER} \
 	    -DCHUNK=${CHUNK$}
-		
+
 ifeq ($(DYNAMIC_SCHEDULER),1) 
 APP_FLAGS += -DDYNAMIC_SCHEDULER
 endif
@@ -44,7 +44,7 @@ ASOBJS = $(ASSRCS:.s=.o)
 
 CFLAGS += -O2 -I$(LIBGOMP_PATH) -I$(INCLUDE_PATH)  -I${VSOC_SRC_DIR}/core -I${VSOC_CONFIG_PATH} -DMPARM
 ASFLAGS = -mfpu=softfpa
-LDFLAGS = -T$(VSOC_ROOT_DIR)/apps/support/simulator/vsoc.ld 
+LDFLAGS = -T$(VSOC_APP_DIR)/support/simulator/vsoc.ld 
 OMP_CFLAGS = -fopenmp -O1 -g -c -I${APPSUPPORT_PATH} -I${VSOC_CONFIG_PATH} -I${VSOC_SRC_DIR}/core  -fdump-tree-ompexp
 
 EXE=o-optimize/app.exe
@@ -67,11 +67,11 @@ $(EXE): app_obj.o $(COBJS) $(ASOBJS)
 
 run :
 	vsoc.x --tb=32 -c 4
-	
+
 clean:	
 	rm -rf *.o *.s *.ompexp *.dis o-optimize  TargetMem_*
 	rm -rf ${APPSUPPORT_PATH}/*.o ${LIBGOMP_PATH}/*.o ${VSOC_CONFIG_PATH}/*.o ${LIBGOMP_PATH}/lib/${LIBRARY_NAME}
 
 disassemble:
 	$(OBJDUMP) -S linked.o > linked.dis
-	
+

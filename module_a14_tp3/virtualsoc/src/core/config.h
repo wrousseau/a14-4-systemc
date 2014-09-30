@@ -87,6 +87,7 @@
 #define ACC_MEM_ADDR						0x0C0000010
 #define ACC_MEM_SIZE						0x001000000
 #define N_ACC_PORTS							1
+*/
 
 //Counter (COUNTER)
 #define COUNTER_BASE_ADDR					0x0D0000000
@@ -94,7 +95,7 @@
 #define N_COUNTER_PORTS						1
 #define COUNTER_INIT_ADDR					0x0D0000000
 #define COUNTER_GET_ADDR					0x0D0000004
-*/
+
 
 //Output mem (OUTM)
 #define OUTPUT_MEM_BASE_ADDR					0x0E0000000

@@ -1,1 +1,1 @@
-/opt/ensta/pack/virtualsoc/VirtualSoc/src/core/config.h
+/home/b/bonnin/Cours/3A/SystemC/TP3/virtualsoc/src/core/config.h
