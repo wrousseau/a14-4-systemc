@@ -66,7 +66,7 @@ int main ()
     #else*/
     //SW IMPLEMENTATION    
  
-    median(MyImage,
+    histMedian(MyImage,
            ImageOut1,
            IMAGE_X,
            IMAGE_Y);

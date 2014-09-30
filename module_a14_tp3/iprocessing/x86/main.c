@@ -25,7 +25,7 @@ int main ()
     usec  = (double) tp.tv_usec /1E6;
     start = sec + usec;
 
-    median(MyImage,
+    histMedian(MyImage,
            ImageOut1,
            IMAGE_X,
            IMAGE_Y);
@@ -51,11 +51,11 @@ int main ()
     sec   = (double) tp.tv_sec;
     usec  = (double) tp.tv_usec /1E6;
     start = sec + usec;
-
+/*
    threshold_equ(ImageOut1,
                   IMAGE_X, 
                   IMAGE_Y, 
-                  100);
+                  100); */
 
     // Time stamp after the computations
     gettimeofday( &tp, NULL );
@@ -95,7 +95,7 @@ int main ()
 
     //End
     //Generate output image
-    pgmWrite ("results.pgm", IMAGE_X, IMAGE_Y, ImageOut2);
+    pgmWrite ("results.pgm", IMAGE_X, IMAGE_Y, ImageOut1);
 
     //End
     return(0);
