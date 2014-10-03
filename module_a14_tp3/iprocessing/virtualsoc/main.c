@@ -5,21 +5,21 @@
 
 #include "appsupport.h"
 //#include "accsupport.h"
-//#include "countersupport.h"
+#include "countersupport.h"
 //#include "omp.h"
 #include "outmsupport.h"
 #include "hws_support.h"
 
 //#define HW_MEDIAN
-//#define TIMING
+#define TIMING
 
 
 //Global variables in local shared
 static unsigned char ImageOut1 [IMAGE_Y*IMAGE_X];
 static unsigned char ImageOut2 [IMAGE_Y*IMAGE_X];
 
-extern unsigned char histogram[256] LOCAL_SHARED;
-
+extern unsigned char medianHistogram[256] LOCAL_SHARED;
+extern unsigned char sobelBlock[KERNEL_SIZE*KERNEL_SIZE] LOCAL_SHARED;
 
 int main ()
 {

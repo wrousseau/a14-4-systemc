@@ -38,7 +38,7 @@ LDFLAGS	    	= -L${VSOC_APP_DIR}/support/lib -lgcc
 #################### FILES ##########################
 CSRCS  += ${VSOC_APP_DIR}/support/simulator/appsupport.c 
 #CSRCS  += ${VSOC_APP_DIR}/support/simulator/accsupport.c
-#CSRCS  += ${VSOC_APP_DIR}/support/simulator/countersupport.c
+CSRCS  += ${VSOC_APP_DIR}/support/simulator/countersupport.c
 CSRCS  += ${VSOC_APP_DIR}/support/simulator/outmsupport.c
 OMP_CSRCS  = main.c
 

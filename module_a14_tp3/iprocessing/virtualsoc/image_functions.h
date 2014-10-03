@@ -16,7 +16,8 @@
 
 #define KERNEL_SIZE 3
 
-unsigned char histogram[256] LOCAL_SHARED;
+unsigned char medianHistogram[256] LOCAL_SHARED;
+unsigned char sobelBlock[KERNEL_SIZE*KERNEL_SIZE] LOCAL_SHARED;
 
 
 void
@@ -114,8 +115,8 @@ inline
 histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
 {
     //Local variables
-    unsigned int c,d;
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+    unsigned int c,d, acc = half_kernel_size*size_x;
 
     unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
 
@@ -126,24 +127,24 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
     for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
     {
         for (d = 0; d < 256; d++)
-            histogram[d] = 0;
+            medianHistogram[d] = 0;
 
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size+1)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size+1)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size+1)]++;
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size+1)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size+1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size+1)]++;
 
         i = 0;
         sum = 0;
 
         while (sum < limit)
         {
-            sum += histogram[i];
+            sum += medianHistogram[i];
             i++;
         } 
 
@@ -151,23 +152,24 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
         for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
         {
-            histogram[*(ImageIn+(c-1)*size_x+d-2)]--;
-            histogram[*(ImageIn+c*size_x+d-2)]--;
-            histogram[*(ImageIn+(c+1)*size_x+d-2)]--;
-            histogram[*(ImageIn+(c-1)*size_x+d+1)]++;
-            histogram[*(ImageIn+c*size_x+d+1)]++;
-            histogram[*(ImageIn+(c+1)*size_x+d+1)]++;
+            medianHistogram[*(ImageIn+acc-size_x+d-2)]--;
+            medianHistogram[*(ImageIn+acc+d-2)]--;
+            medianHistogram[*(ImageIn+acc+size_x+d-2)]--;
+            medianHistogram[*(ImageIn+acc-size_x+d+1)]++;
+            medianHistogram[*(ImageIn+acc+d+1)]++;
+            medianHistogram[*(ImageIn+acc-size_x+d+1)]++;
 
             i = 0;
             sum = 0;
             while (sum < limit)
             {
-                sum += histogram[i];
+                sum += medianHistogram[i];
                 i++;
             } 
 
             *(ImageOut+c*size_x+d) = i;
         }
+        acc += size_x;
     }
 }
 
@@ -179,7 +181,7 @@ threshold_equ(unsigned char *imageIn, unsigned int size_x, unsigned int size_y, 
     unsigned int i;
     for(i=0; i<size_x*size_y; i++)
     {
-      if (*(imageIn+i) < 100)
+      if (*(imageIn+i) < max)
         *(imageIn+i) = 0; 
     } 
 }
@@ -193,27 +195,38 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
 
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
     unsigned int c, d, acc = half_kernel_size*size_x;
+    int horizontal, vertical, result;
 
-    unsigned char topLeft, top, topRight, left, right, bottomLeft, bottom, bottomRight;
     //Compute
     for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
     {
+        sobelBlock[0] = *(ImageIn+acc-size_x+half_kernel_size-1);
+        sobelBlock[1] = *(ImageIn+acc-size_x+half_kernel_size);
+        sobelBlock[2] = *(ImageIn+acc-size_x+half_kernel_size+1);
+        sobelBlock[3] = *(ImageIn+acc+half_kernel_size-1);
+        sobelBlock[4] = *(ImageIn+acc+half_kernel_size+1);
+        sobelBlock[5] = *(ImageIn+acc+size_x+half_kernel_size-1);
+        sobelBlock[6] = *(ImageIn+acc+size_x+half_kernel_size);
+        sobelBlock[7] = *(ImageIn+acc+size_x+half_kernel_size+1);
         for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
         {
-            topLeft = *(ImageIn+acc-size_x+d-1);
-            top = *(ImageIn+acc-size_x+d);
-            topRight = *(ImageIn+acc-size_x+d+1);
-            left = *(ImageIn+acc+d-1);
-            right = *(ImageIn+acc+d+1);
-            bottomLeft = *(ImageIn+acc+size_x+d-1);
-            bottom = *(ImageIn+acc+size_x+d);
-            bottomRight = *(ImageIn+acc+size_x+d+1);
-            int horizontal = -topLeft-2*left-bottomLeft+topRight+2*right+bottomRight;
-            int vertical = -topLeft-2*top-topRight+bottomLeft+2*bottom+bottomRight;
-            int temp = abs(horizontal)+abs(vertical);
-            unsigned char result = (temp > 255) ? 255 : temp;
+            int horizontal = -sobelBlock[0]-2*sobelBlock[3]-sobelBlock[5]+sobelBlock[2]+2*sobelBlock[3]+sobelBlock[7];
+            int vertical = -sobelBlock[0]-2*sobelBlock[1]-sobelBlock[2]+sobelBlock[5]+2*sobelBlock[6]+sobelBlock[7];
+            result = abs(horizontal)+abs(vertical);
+            if (result > 255)
+                result = 255;
 
             *(ImageOut+acc+d) = result;
+
+            sobelBlock[0] = sobelBlock[1];
+            sobelBlock[1] = sobelBlock[2];
+            sobelBlock[5] = sobelBlock[6];
+            sobelBlock[6] = sobelBlock[7];
+            sobelBlock[2] = *(ImageIn+acc-size_x+d+2);
+            sobelBlock[3] = *(ImageIn+acc+half_kernel_size);
+            sobelBlock[4] = *(ImageIn+acc+half_kernel_size+1);
+            sobelBlock[7] = *(ImageIn+acc+size_x+half_kernel_size+2);
+
         }
         acc += size_x;
     }
