@@ -157,7 +157,7 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
             medianHistogram[*(ImageIn+acc+size_x+d-2)]--;
             medianHistogram[*(ImageIn+acc-size_x+d+1)]++;
             medianHistogram[*(ImageIn+acc+d+1)]++;
-            medianHistogram[*(ImageIn+acc-size_x+d+1)]++;
+            medianHistogram[*(ImageIn+acc+size_x+d+1)]++;
 
             i = 0;
             sum = 0;
