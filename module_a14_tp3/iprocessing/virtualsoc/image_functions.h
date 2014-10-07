@@ -114,8 +114,8 @@ inline
 histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
 {
     //Local variables
-    unsigned int c,d;
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+    unsigned int c, d, acc = half_kernel_size*size_x;
 
     unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
 
@@ -128,15 +128,15 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
         for (d = 0; d < 256; d++)
             histogram[d] = 0;
 
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size-1)]++;
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size)]++;
-        histogram[*(ImageIn+(c-1)*size_x+half_kernel_size+1)]++;
-        histogram[*(ImageIn+c*size_x+half_kernel_size+1)]++;
-        histogram[*(ImageIn+(c+1)*size_x+half_kernel_size+1)]++;
+        histogram[*(ImageIn+acc-size_x+half_kernel_size-1)]++;
+        histogram[*(ImageIn+acc+half_kernel_size-1)]++;
+        histogram[*(ImageIn+acc+size_x+half_kernel_size-1)]++;
+        histogram[*(ImageIn+acc-size_x+half_kernel_size)]++;
+        histogram[*(ImageIn+acc+half_kernel_size)]++;
+        histogram[*(ImageIn+acc+size_x+half_kernel_size)]++;
+        histogram[*(ImageIn+acc-size_x+half_kernel_size+1)]++;
+        histogram[*(ImageIn+acc+half_kernel_size+1)]++;
+        histogram[*(ImageIn+acc+size_x+half_kernel_size+1)]++;
 
         i = 0;
         sum = 0;
@@ -145,18 +145,18 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
         {
             sum += histogram[i];
             i++;
-        } 
+        }
 
-        *(ImageOut+c*size_x+half_kernel_size) = i;
+        *(ImageOut+acc+half_kernel_size) = i;
 
         for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
         {
-            histogram[*(ImageIn+(c-1)*size_x+d-2)]--;
-            histogram[*(ImageIn+c*size_x+d-2)]--;
-            histogram[*(ImageIn+(c+1)*size_x+d-2)]--;
-            histogram[*(ImageIn+(c-1)*size_x+d+1)]++;
-            histogram[*(ImageIn+c*size_x+d+1)]++;
-            histogram[*(ImageIn+(c+1)*size_x+d+1)]++;
+            histogram[*(ImageIn+acc-size_x+d-2)]--;
+            histogram[*(ImageIn+acc+d-2)]--;
+            histogram[*(ImageIn+acc+size_x+d-2)]--;
+            histogram[*(ImageIn+acc-size_x+d+1)]++;
+            histogram[*(ImageIn+acc+d+1)]++;
+            histogram[*(ImageIn+acc+size_x+d+1)]++;
 
             i = 0;
             sum = 0;
@@ -164,10 +164,11 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
             {
                 sum += histogram[i];
                 i++;
-            } 
+            }
 
-            *(ImageOut+c*size_x+d) = i;
+            *(ImageOut+acc+d) = i;
         }
+        acc += size_x;
     }
 }
 
@@ -180,8 +181,8 @@ threshold_equ(unsigned char *imageIn, unsigned int size_x, unsigned int size_y, 
     for(i=0; i<size_x*size_y; i++)
     {
       if (*(imageIn+i) < 100)
-        *(imageIn+i) = 0; 
-    } 
+        *(imageIn+i) = 0;
+    }
 }
 
 //Sobel
@@ -217,6 +218,259 @@ sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, uns
         }
         acc += size_x;
     }
+}
+
+//Insertion d'un élément dans un tableau trié
+void inline insert(unsigned char tab[], unsigned char x, short end) {
+  register short i = end;
+  while (i >= 0 && tab[i] > x) {
+    tab[i+1] = tab[i];
+    i--;
+  }
+  tab[i+1] = x;
+}
+
+//Décalage à gauche des colonnes d'une matrice 3*3
+void inline dec(unsigned char tab[]) {
+  tab[0] = tab[1];
+  tab[1] = tab[2];
+  tab[3] = tab[4];
+  tab[4] = tab[5];
+  tab[6] = tab[7];
+  tab[7] = tab[8];
+}
+
+void allInTheSame (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y) {
+  unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
+  unsigned char thresholdValues[KERNEL_SIZE*KERNEL_SIZE];
+  register short accPetit, k, l;
+  register int horizontal, vertical;
+  register unsigned int c, d, accGrand;
+
+  //Coin en haut à gauche
+  accGrand = size_x;
+  accPetit = KERNEL_SIZE;
+  thresholdValues[0] = (*(ImageIn) > 100) ? *(ImageIn) : 0;
+  *(ImageOut) = thresholdValues[0];
+  thresholdValues[1] = (*(ImageIn+1) > 100) ? *(ImageIn+1) : 0;
+  *(ImageOut+1) = thresholdValues[1];
+  thresholdValues[2] = (*(ImageIn+2) > 100) ? *(ImageIn+2) : 0;
+  *(ImageOut+2) = thresholdValues[2];
+  thresholdValues[3] = (*(ImageIn+accGrand) > 100) ? *(ImageIn+accGrand) : 0;
+  thresholdValues[6] = (*(ImageIn+accGrand+size_x) > 100) ? *(ImageIn+accGrand+size_x) : 0;
+  for (k = 1; k < 3; k++) {
+    for (l = 1; l < 3; l++) {
+      inputBlock[0] = *(ImageIn+l-1+accGrand-size_x);
+      insert(inputBlock, *(ImageIn+l+accGrand-size_x), 0);
+      insert(inputBlock, *(ImageIn+l+1+accGrand-size_x), 1);
+      insert(inputBlock, *(ImageIn+l-1+accGrand), 2);
+      insert(inputBlock, *(ImageIn+l+accGrand), 3);
+      insert(inputBlock, *(ImageIn+l+1+accGrand), 4);
+      insert(inputBlock, *(ImageIn+l-1+accGrand+size_x), 5);
+      insert(inputBlock, *(ImageIn+l+accGrand+size_x), 6);
+      insert(inputBlock, *(ImageIn+l+1+accGrand+size_x), 7);
+      thresholdValues[l+accPetit] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+    }
+    accGrand += size_x;
+    accPetit += KERNEL_SIZE;
+  }
+  horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+    -thresholdValues[6] + thresholdValues[8];
+  vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+    + thresholdValues[7] + thresholdValues[8];
+  *(ImageOut+size_x+1) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+
+  //Première ligne
+  for (d = 2; d < size_x - 2; d++) {
+    dec(thresholdValues);
+    accGrand = size_x;
+    accPetit = KERNEL_SIZE;
+    thresholdValues[2] = (*(ImageIn+d+1) > 100) ? *(ImageIn+d+1) : 0;
+    *(ImageOut+d+1) = thresholdValues[2];
+    for (k = 1; k < 3; k++) {
+      inputBlock[0] = *(ImageIn+d+accGrand-size_x);
+      insert(inputBlock, *(ImageIn+d+1+accGrand-size_x), 0);
+      insert(inputBlock, *(ImageIn+d+2+accGrand-size_x), 1);
+      insert(inputBlock, *(ImageIn+d+accGrand), 2);
+      insert(inputBlock, *(ImageIn+d+1+accGrand), 3);
+      insert(inputBlock, *(ImageIn+d+2+accGrand), 4);
+      insert(inputBlock, *(ImageIn+d+accGrand+size_x), 5);
+      insert(inputBlock, *(ImageIn+d+1+accGrand+size_x), 6);
+      insert(inputBlock, *(ImageIn+d+2+accGrand+size_x), 7);
+      thresholdValues[accPetit+2] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+      accGrand += size_x;
+      accPetit += KERNEL_SIZE;
+    }
+    horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+      -thresholdValues[6] + thresholdValues[8];
+    vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+      + thresholdValues[7] + thresholdValues[8];
+    *(ImageOut+size_x+d) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+  }
+
+  //Coin en haut à droite
+  dec(thresholdValues);
+  thresholdValues[2] = (*(ImageIn+size_x-1) > 100) ? *(ImageIn+size_x-1) : 0;
+  *(ImageOut+size_x-1) = thresholdValues[2];
+  thresholdValues[5] = (*(ImageIn+size_x+size_x-1) > 100) ? *(ImageIn+size_x+size_x-1) : 0;
+  thresholdValues[7] = (*(ImageIn+size_x+size_x+size_x-1) > 100) ? *(ImageIn+size_x+size_x+size_x-1) : 0;
+  horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+    -thresholdValues[6] + thresholdValues[8];
+  vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+    + thresholdValues[7] + thresholdValues[8];
+  *(ImageOut+size_x+size_x-2) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+
+  //Au milieu
+  accGrand = 2*size_x;
+  for (c = 2; c < size_y - 2; c++) {
+    thresholdValues[0] = (*(ImageIn+accGrand-size_x) > 100) ? *(ImageIn+accGrand-size_x) : 0;
+    *(ImageOut+accGrand-size_x) = thresholdValues[0];
+    thresholdValues[3] = (*(ImageIn+accGrand) > 100) ? *(ImageIn+accGrand) : 0;
+    thresholdValues[6] = (*(ImageIn+accGrand+size_x) > 100) ? *(ImageIn+accGrand+size_x) : 0;
+    accPetit = 0;
+    accGrand -= size_x;
+    for (k = 0; k < 3; k++) {
+      for (l = 1; l < 3; l++) {
+        inputBlock[0] = *(ImageIn+l-1+accGrand-size_x);
+        insert(inputBlock, *(ImageIn+l+accGrand-size_x), 0);
+        insert(inputBlock, *(ImageIn+l+1+accGrand-size_x), 1);
+        insert(inputBlock, *(ImageIn+l-1+accGrand), 2);
+        insert(inputBlock, *(ImageIn+l+accGrand), 3);
+        insert(inputBlock, *(ImageIn+l+1+accGrand), 4);
+        insert(inputBlock, *(ImageIn+l-1+accGrand+size_x), 5);
+        insert(inputBlock, *(ImageIn+l+accGrand+size_x), 6);
+        insert(inputBlock, *(ImageIn+l+1+accGrand+size_x), 7);
+        thresholdValues[l+accPetit] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+      }
+      accPetit += KERNEL_SIZE;
+      accGrand += size_x;
+    }
+    accGrand = accGrand - size_x - size_x;
+    horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+      -thresholdValues[6] + thresholdValues[8];
+    vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+      + thresholdValues[7] + thresholdValues[8];
+    *(ImageOut+accGrand+1) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+
+    for (d = 2; d < size_x - 2; d++) {
+      dec(thresholdValues);
+      accPetit = 0;
+      accGrand -= size_x;
+      for (k = 0; k < 3; k++) {
+        inputBlock[0] = *(ImageIn+d+accGrand-size_x);
+        insert(inputBlock, *(ImageIn+d+1+accGrand-size_x), 0);
+        insert(inputBlock, *(ImageIn+d+2+accGrand-size_x), 1);
+        insert(inputBlock, *(ImageIn+d+accGrand), 2);
+        insert(inputBlock, *(ImageIn+d+1+accGrand), 3);
+        insert(inputBlock, *(ImageIn+d+2+accGrand), 4);
+        insert(inputBlock, *(ImageIn+d+accGrand+size_x), 5);
+        insert(inputBlock, *(ImageIn+d+1+accGrand+size_x), 6);
+        insert(inputBlock, *(ImageIn+d+2+accGrand+size_x), 7);
+        thresholdValues[accPetit+2] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+        accGrand += size_x;
+        accPetit += KERNEL_SIZE;
+      }
+      accGrand = accGrand - size_x - size_x;
+      horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+        -thresholdValues[6] + thresholdValues[8];
+      vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+        + thresholdValues[7] + thresholdValues[8];
+      *(ImageOut+accGrand+d) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+    }
+
+    dec(thresholdValues);
+    thresholdValues[2] = (*(ImageIn+accGrand-1) > 100) ? *(ImageIn+accGrand-1) : 0;
+    *(ImageOut+accGrand-1) = thresholdValues[2];
+    thresholdValues[5] = (*(ImageIn+accGrand+size_x-1) > 100) ? *(ImageIn+accGrand+size_x-1) : 0;
+    thresholdValues[7] = (*(ImageIn+accGrand+size_x+size_x-1) > 100) ? *(ImageIn+accGrand+size_x+size_x-1) : 0;
+    horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+      -thresholdValues[6] + thresholdValues[8];
+    vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+      + thresholdValues[7] + thresholdValues[8];
+    *(ImageOut+accGrand+size_x-2) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+
+    accGrand += size_x;
+  }
+
+  //Coin en bas à gauche
+  accGrand = (size_y - 2) * size_x;
+  accPetit = 0;
+  thresholdValues[0] = (*(ImageIn+accGrand-size_x) > 100) ? *(ImageIn+accGrand-size_x) : 0;
+  *(ImageOut+accGrand-size_x) = thresholdValues[0];
+  thresholdValues[3] = (*(ImageIn+accGrand) > 100) ? *(ImageIn+accGrand) : 0;
+  *(ImageOut+accGrand) = thresholdValues[3];
+  thresholdValues[6] = (*(ImageIn+accGrand+size_x) > 100) ? *(ImageIn+accGrand+size_x) : 0;
+  *(ImageOut+accGrand+size_x) = thresholdValues[6];
+  thresholdValues[7] = (*(ImageIn+accGrand+size_x+1) > 100) ? *(ImageIn+accGrand+size_x+1) : 0;
+  *(ImageOut+accGrand+size_x+1) = thresholdValues[7];
+  thresholdValues[8] = (*(ImageIn+accGrand+size_x+2) > 100) ? *(ImageIn+accGrand+size_x+2) : 0;
+  *(ImageOut+accGrand+size_x+2) = thresholdValues[8];
+  accGrand -= size_x;
+  for (k = 0; k < 2; k++) {
+    for (l = 1; l < 3; l++) {
+      inputBlock[0] = *(ImageIn+l-1+accGrand-size_x);
+      insert(inputBlock, *(ImageIn+l+accGrand-size_x), 0);
+      insert(inputBlock, *(ImageIn+l+1+accGrand-size_x), 1);
+      insert(inputBlock, *(ImageIn+l-1+accGrand), 2);
+      insert(inputBlock, *(ImageIn+l+accGrand), 3);
+      insert(inputBlock, *(ImageIn+l+1+accGrand), 4);
+      insert(inputBlock, *(ImageIn+l-1+accGrand+size_x), 5);
+      insert(inputBlock, *(ImageIn+l+accGrand+size_x), 6);
+      insert(inputBlock, *(ImageIn+l+1+accGrand+size_x), 7);
+      thresholdValues[l+accPetit] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+    }
+    accGrand += size_x;
+    accPetit += KERNEL_SIZE;
+  }
+  horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+    -thresholdValues[6] + thresholdValues[8];
+  vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+    + thresholdValues[7] + thresholdValues[8];
+  *(ImageOut+(size_y-2)*size_x+1) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+
+  //Dernière ligne
+  for (d = 2; d < size_x - 2; d++) {
+    dec(thresholdValues);
+    accGrand = (size_y-2)*size_x;
+    accPetit = 0;
+    thresholdValues[8] = (*(ImageIn+accGrand+size_x+d+1) > 100) ? *(ImageIn+accGrand+size_x+d+1) : 0;
+    *(ImageOut+accGrand+size_x+d+1) = thresholdValues[8];
+    accGrand -= size_x;
+    for (k = 0; k < 2; k++) {
+      inputBlock[0] = *(ImageIn+d+accGrand-size_x);
+      insert(inputBlock, *(ImageIn+d+1+accGrand-size_x), 0);
+      insert(inputBlock, *(ImageIn+d+2+accGrand-size_x), 1);
+      insert(inputBlock, *(ImageIn+d+accGrand), 2);
+      insert(inputBlock, *(ImageIn+d+1+accGrand), 3);
+      insert(inputBlock, *(ImageIn+d+2+accGrand), 4);
+      insert(inputBlock, *(ImageIn+d+accGrand+size_x), 5);
+      insert(inputBlock, *(ImageIn+d+1+accGrand+size_x), 6);
+      insert(inputBlock, *(ImageIn+d+2+accGrand+size_x), 7);
+      thresholdValues[accPetit+2] = (inputBlock[4] > 100) ? inputBlock[4] : 0;
+      accGrand += size_x;
+      accPetit += KERNEL_SIZE;
+    }
+    horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+      -thresholdValues[6] + thresholdValues[8];
+    vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+      + thresholdValues[7] + thresholdValues[8];
+    *(ImageOut+(size_y-2)*size_x+d) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
+  }
+
+   //Coin en bas à droite
+   dec(thresholdValues);
+   accGrand = (size_y-2)*size_x;
+   thresholdValues[2] = (*(ImageIn+accGrand-1) > 100) ? *(ImageIn+accGrand-1) : 0;
+   *(ImageOut+accGrand-1) = thresholdValues[2];
+   thresholdValues[5] = (*(ImageIn+accGrand+size_x-1) > 100) ? *(ImageIn+accGrand+size_x-1) : 0;
+   *(ImageOut+accGrand+size_x-1) = thresholdValues[5];
+   thresholdValues[7] = (*(ImageIn+accGrand+size_x+size_x-1) > 100) ? *(ImageIn+accGrand+size_x+size_x-1) : 0;
+   *(ImageOut+accGrand+size_x+size_x-1) = thresholdValues[7];
+   horizontal = -thresholdValues[0] + thresholdValues[2] - thresholdValues[3] - thresholdValues[3] + thresholdValues[5] + thresholdValues[5]
+     -thresholdValues[6] + thresholdValues[8];
+   vertical = -thresholdValues[0] - thresholdValues[1] - thresholdValues[1] - thresholdValues[2] + thresholdValues[6] + thresholdValues[7]
+     + thresholdValues[7] + thresholdValues[8];
+   *(ImageOut+accGrand+size_x-2) = (abs(horizontal)+abs(vertical) < 256) ? abs(horizontal)+abs(vertical) : 255;
 }
 
 #ifdef X86

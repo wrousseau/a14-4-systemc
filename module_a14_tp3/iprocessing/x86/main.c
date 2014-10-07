@@ -25,10 +25,15 @@ int main ()
     usec  = (double) tp.tv_usec /1E6;
     start = sec + usec;
 
-    histMedian(MyImage,
+    allInTheSame(MyImage,
            ImageOut1,
            IMAGE_X,
            IMAGE_Y);
+
+    /*histMedian(MyImage,
+           ImageOut1,
+           IMAGE_X,
+           IMAGE_Y);*/
 
     // Time stamp after the computations
     gettimeofday( &tp, NULL );
@@ -44,13 +49,13 @@ int main ()
     //--------------------------------------------------
     //---- THRESHOLD FILTER
     //--------------------------------------------------
-    printf("Start threshold filter\n");
+    /*printf("Start threshold filter\n");
 
     // Time stamp before the computations
     gettimeofday( &tp, NULL );
     sec   = (double) tp.tv_sec;
     usec  = (double) tp.tv_usec /1E6;
-    start = sec + usec;
+    start = sec + usec;*/
 /*
    threshold_equ(ImageOut1,
                   IMAGE_X, 
@@ -58,7 +63,7 @@ int main ()
                   100); */
 
     // Time stamp after the computations
-    gettimeofday( &tp, NULL );
+    /*gettimeofday( &tp, NULL );
     sec   = (double) tp.tv_sec;
     usec  = (double) tp.tv_usec /1E6;
     end  = sec + usec;
@@ -89,7 +94,7 @@ int main ()
     usec  = (double) tp.tv_usec /1E6;
     end  = sec + usec;
     // Time calculation (in seconds)
-    time = end - start;
+    time = end - start;*/
 
     printf("Total execution time is %f\n", time);
 

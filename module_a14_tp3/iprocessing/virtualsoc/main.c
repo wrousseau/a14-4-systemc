@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 #include "../images/input_image.h"
-#include "image_functions.h"
+#include "image_function2.h"
 
 #include "appsupport.h"
 //#include "accsupport.h"
@@ -15,8 +15,8 @@
 
 
 //Global variables in local shared
-static unsigned char ImageOut1 [IMAGE_Y*IMAGE_X];
-static unsigned char ImageOut2 [IMAGE_Y*IMAGE_X];
+static unsigned char ImageOut1 [IMAGE_Y*IMAGE_X] LOCAL_SHARED;
+//static unsigned char ImageOut2 [IMAGE_Y*IMAGE_X] LOCAL_SHARED;
 
 extern unsigned char histogram[256] LOCAL_SHARED;
 
@@ -69,14 +69,23 @@ int main ()
     #else*/
     //SW IMPLEMENTATION    
  
-    histMedian(MyImage,
+    /*histMedian(MyImage,
            ImageOut1,
            IMAGE_X,
-           IMAGE_Y);
+           IMAGE_Y);*/
     //#endif
 
+    allInTheSame(MyImage,
+                 ImageOut1,
+                 IMAGE_X,
+                 IMAGE_Y);
+
+#ifdef TIMING
+    counter_get();
+#endif
+
     //--------------------------------------------------
-    #ifdef TIMING
+    /* #ifdef TIMING
     counter_get();
     counter_init();
     #endif
@@ -109,7 +118,7 @@ int main ()
  
     #ifdef TIMING
     counter_get();
-    #endif
+    #endif*/
     }
     
     else {
@@ -123,7 +132,7 @@ int main ()
       stop_metric();
 
       //Send result to output memory
-      outm_write_burst (ImageOut2, IMAGE_X, IMAGE_Y);
+      outm_write_burst (ImageOut1, IMAGE_X, IMAGE_Y);
       outm_write_file ();
     }
 
