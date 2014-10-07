@@ -124,32 +124,32 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
     unsigned char i = 0, sum = 0;
 
-    for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
+    for (d = 0; d < 256; d++)
+        medianHistogram[d] = 0;
+
+    medianHistogram[*(ImageIn+acc-size_x+half_kernel_size-1)]++;
+    medianHistogram[*(ImageIn+acc+half_kernel_size-1)]++;
+    medianHistogram[*(ImageIn+acc+size_x+half_kernel_size-1)]++;
+    medianHistogram[*(ImageIn+acc-size_x+half_kernel_size)]++;
+    medianHistogram[*(ImageIn+acc+half_kernel_size)]++;
+    medianHistogram[*(ImageIn+acc+size_x+half_kernel_size)]++;
+    medianHistogram[*(ImageIn+acc-size_x+half_kernel_size+1)]++;
+    medianHistogram[*(ImageIn+acc+half_kernel_size+1)]++;
+    medianHistogram[*(ImageIn+acc+size_x+half_kernel_size+1)]++;
+
+    i = 0;
+    sum = 0;
+
+    while (sum < limit)
     {
-        for (d = 0; d < 256; d++)
-            medianHistogram[d] = 0;
+        sum += medianHistogram[i];
+        i++;
+    } 
 
-        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size-1)]++;
-        medianHistogram[*(ImageIn+acc+half_kernel_size-1)]++;
-        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size-1)]++;
-        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size)]++;
-        medianHistogram[*(ImageIn+acc+half_kernel_size)]++;
-        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size)]++;
-        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size+1)]++;
-        medianHistogram[*(ImageIn+acc+half_kernel_size+1)]++;
-        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size+1)]++;
+    *(ImageOut+acc+half_kernel_size) = i;
 
-        i = 0;
-        sum = 0;
-
-        while (sum < limit)
-        {
-            sum += medianHistogram[i];
-            i++;
-        } 
-
-        *(ImageOut+c*size_x+half_kernel_size) = i;
-
+    for ( c=half_kernel_size; c<(size_y-half_kernel_size); c+=2 )
+    {
         for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
         {
             medianHistogram[*(ImageIn+acc-size_x+d-2)]--;
@@ -167,9 +167,65 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
                 i++;
             } 
 
-            *(ImageOut+c*size_x+d) = i;
+            *(ImageOut+acc+d) = i;
         }
         acc += size_x;
+
+        d = size_x-half_kernel_size-1;
+        medianHistogram[*(ImageIn+acc-2*size_x+d-1)]--;
+        medianHistogram[*(ImageIn+acc-2*size_x+d)]--;
+        medianHistogram[*(ImageIn+acc-2*size_x+d+1)]--;
+        medianHistogram[*(ImageIn+acc+size_x+d-1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+d)]++;
+        medianHistogram[*(ImageIn+acc+size_x+d+1)]++;
+        i = 0;
+        sum = 0;
+        while (sum < limit)
+        {
+            sum += medianHistogram[i];
+            i++;
+        } 
+
+        *(ImageOut+acc+d) = i;
+
+        for ( d=size_x-half_kernel_size-2 ; d>half_kernel_size-1; d-- )
+        {
+            medianHistogram[*(ImageIn+acc-size_x+d+2)]--;
+            medianHistogram[*(ImageIn+acc+d+2)]--;
+            medianHistogram[*(ImageIn+acc+size_x+d+2)]--;
+            medianHistogram[*(ImageIn+acc-size_x+d-1)]++;
+            medianHistogram[*(ImageIn+acc+d-1)]++;
+            medianHistogram[*(ImageIn+acc+size_x+d-1)]++;
+
+            i = 0;
+            sum = 0;
+            while (sum < limit)
+            {
+                sum += medianHistogram[i];
+                i++;
+            } 
+
+            *(ImageOut+acc+d) = i;
+        }
+        acc += size_x;
+
+
+        d = half_kernel_size;
+        medianHistogram[*(ImageIn+acc-2*size_x+d-1)]--;
+        medianHistogram[*(ImageIn+acc-2*size_x+d)]--;
+        medianHistogram[*(ImageIn+acc-2*size_x+d+1)]--;
+        medianHistogram[*(ImageIn+acc+size_x+d-1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+d)]++;
+        medianHistogram[*(ImageIn+acc+size_x+d+1)]++;
+        i = 0;
+        sum = 0;
+        while (sum < limit)
+        {
+            sum += medianHistogram[i];
+            i++;
+        }
+
+        *(ImageOut+acc+d) = i;
     }
 }
 
