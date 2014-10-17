@@ -28,10 +28,10 @@ LIBGOMP_FLAGS	+= -DSINGLE_WS
 
 ## Other FLags
 #Uncomment and replace for OpenMP
-#INCDIR       	= -I. -I.. -I${SUPPORT_PATH} -I${LIBGOMP_PATH} -I${VSOC_CONFIG_PATH} -I${VSOC_SRC_DIR}/core 
-INCDIR       	= -I. -I.. -I${SUPPORT_PATH} -I${VSOC_SRC_DIR}/core 
+INCDIR       	= -I. -I.. -I${SUPPORT_PATH} -I${LIBGOMP_PATH} -I${VSOC_CONFIG_PATH} -I${VSOC_SRC_DIR}/core 
+#INCDIR       	= -I. -I.. -I${SUPPORT_PATH} -I${VSOC_SRC_DIR}/core 
 COMMON_CFLAGS 	= $(INCDIR) -msoft-float -mcpu=arm7 -Winline
-CFLAGS	 	= -O2 $(COMMON_CFLAGS) $(LIBGOMP_FLAGS)
+CFLAGS	 	= -O3 $(COMMON_CFLAGS) $(LIBGOMP_FLAGS)
 ASFLAGS    	= -mfpu=softfpa
 LDFLAGS	    	= -L${VSOC_APP_DIR}/support/lib -lgcc
 

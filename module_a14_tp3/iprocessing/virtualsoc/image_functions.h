@@ -13,12 +13,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "appsupport.h"
+#include "omp.h"
+
 
 #define KERNEL_SIZE 3
 
 unsigned char medianHistogram[256] LOCAL_SHARED;
-unsigned char sobelBlock[KERNEL_SIZE*KERNEL_SIZE] LOCAL_SHARED;
-
 
 void
 inline
@@ -65,8 +65,8 @@ void insertSort(unsigned char array[], short begin, short end) {
     while (k > begin && array[k-1] > array[k]) {
       swap(array, k, k-1);
       k--;
-    }
   }
+}
 }
 
 unsigned char
@@ -78,6 +78,7 @@ computeMedian(unsigned char array[])
   return array[4];
 }
 
+
 //median
 void
 inline
@@ -87,26 +88,26 @@ median (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_x, u
   int half_kernel_size = (KERNEL_SIZE - 1) / 2;
   unsigned int c, d, acc = half_kernel_size*size_x;
 
-    unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
+  unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
 
-    for ( c=half_kernel_size; c < (size_y-half_kernel_size); c++ )
+  for ( c=half_kernel_size; c < (size_y-half_kernel_size); c++ )
+  {
+    for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
     {
-        for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
-        {
-            inputBlock[0] = *(ImageIn+acc-size_x+d-1);
-            inputBlock[1] = *(ImageIn+acc+d-1);
-            inputBlock[2] = *(ImageIn+acc+size_x+d-1);
-            inputBlock[3] = *(ImageIn+acc-size_x+d);
-            inputBlock[4] = *(ImageIn+acc+d);
-            inputBlock[5] = *(ImageIn+acc+size_x+d);
-            inputBlock[6] = *(ImageIn+acc-size_x+d+1);
-            inputBlock[7] = *(ImageIn+acc+d+1);
-            inputBlock[8] = *(ImageIn+acc+size_x+d+1);
+        inputBlock[0] = *(ImageIn+acc-size_x+d-1);
+        inputBlock[1] = *(ImageIn+acc+d-1);
+        inputBlock[2] = *(ImageIn+acc+size_x+d-1);
+        inputBlock[3] = *(ImageIn+acc-size_x+d);
+        inputBlock[4] = *(ImageIn+acc+d);
+        inputBlock[5] = *(ImageIn+acc+size_x+d);
+        inputBlock[6] = *(ImageIn+acc-size_x+d+1);
+        inputBlock[7] = *(ImageIn+acc+d+1);
+        inputBlock[8] = *(ImageIn+acc+size_x+d+1);
 
-            *(ImageOut+acc+d) = computeMedian(inputBlock);
-        }
-        acc += size_x;
+        *(ImageOut+acc+d) = computeMedian(inputBlock);
     }
+    acc += size_x;
+}
 }
 
 // histogram median
@@ -116,14 +117,80 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 {
     //Local variables
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
-    unsigned int c,d, acc = half_kernel_size*size_x;
+    unsigned int c, d, acc;
+    int limit = KERNEL_SIZE*KERNEL_SIZE/2;
+    unsigned char i = 0, sum = 0;
+
+    #pragma omp parallel for private(d, acc, i, sum, medianHistogram)
+    for ( c=0; c<size_y-2*half_kernel_size; c++ )
+    {
+        for (d = 0; d < 256; d++)
+            medianHistogram[d] = 0;
+        acc = half_kernel_size*size_x + c*size_x;
+
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size-1)]++;
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size)]++;
+        medianHistogram[*(ImageIn+acc-size_x+half_kernel_size+1)]++;
+        medianHistogram[*(ImageIn+acc+half_kernel_size+1)]++;
+        medianHistogram[*(ImageIn+acc+size_x+half_kernel_size+1)]++;
+        i = 0;
+        sum = 0;
+        if (sum < limit)
+        {
+            do
+            {
+                sum += medianHistogram[i];
+                i++;
+            } while (sum < limit);
+        }
+        *(ImageOut+acc+half_kernel_size) = i;
+        for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
+        {
+            medianHistogram[*(ImageIn+acc-size_x+d-2)]--;
+            medianHistogram[*(ImageIn+acc+d-2)]--;
+            medianHistogram[*(ImageIn+acc+size_x+d-2)]--;
+            medianHistogram[*(ImageIn+acc-size_x+d+1)]++;
+            medianHistogram[*(ImageIn+acc+d+1)]++;
+            medianHistogram[*(ImageIn+acc+size_x+d+1)]++;
+            i = 0;
+            sum = 0;
+            if (sum < limit)
+            {
+                do
+                {
+                    sum += medianHistogram[i];
+                    i++;
+                } while (sum < limit);
+            }
+            *(ImageOut+acc+d) = i;
+        }
+    }
+}
+
+
+
+/*
+ *
+ */
+void
+inline
+histNoJumpMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
+{
+    //Local variables
+    register int half_kernel_size = (KERNEL_SIZE - 1) / 2;
+    register unsigned int c,d, acc = half_kernel_size*size_x;
 
     unsigned char inputBlock[KERNEL_SIZE*KERNEL_SIZE];
 
-    int limit = KERNEL_SIZE*KERNEL_SIZE/2;
+    register int limit = KERNEL_SIZE*KERNEL_SIZE/2;
 
-    unsigned char i = 0, sum = 0;
+    register unsigned char i = 0, sum = 0;
 
+    // Initializing the histogram using the top left block
     for (d = 0; d < 256; d++)
         medianHistogram[d] = 0;
 
@@ -148,8 +215,10 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
     *(ImageOut+acc+half_kernel_size) = i;
 
+    // The outer loop processes two rows
     for ( c=half_kernel_size; c<(size_y-half_kernel_size); c+=2 )
     {
+        // Processing the first row
         for ( d=half_kernel_size+1; d<(size_x-half_kernel_size); d++ )
         {
             medianHistogram[*(ImageIn+acc-size_x+d-2)]--;
@@ -169,6 +238,7 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
             *(ImageOut+acc+d) = i;
         }
+        // Moving down one row
         acc += size_x;
 
         d = size_x-half_kernel_size-1;
@@ -188,6 +258,7 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
         *(ImageOut+acc+d) = i;
 
+        // Processing the second row
         for ( d=size_x-half_kernel_size-2 ; d>half_kernel_size-1; d-- )
         {
             medianHistogram[*(ImageIn+acc-size_x+d+2)]--;
@@ -207,8 +278,9 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
 
             *(ImageOut+acc+d) = i;
         }
-        acc += size_x;
 
+        // Moving down one row
+        acc += size_x;
 
         d = half_kernel_size;
         medianHistogram[*(ImageIn+acc-2*size_x+d-1)]--;
@@ -229,18 +301,33 @@ histMedian (unsigned char * ImageIn, unsigned char *ImageOut, unsigned int size_
     }
 }
 
+/*
+Constant Time Histogram Median
+
+Execution length is 77072152 ns
+Processor 0 - Start threshold filter 
+Execution length is 170374 ns
+Processor 0 - Start sobel filter 
+Execution length is 728226 ns
+*/
+
 //threshold_equ
 void
 inline
 threshold_equ(unsigned char *imageIn, unsigned int size_x, unsigned int size_y, unsigned char max)
 {
-    unsigned int i;
-    for(i=0; i<size_x*size_y; i++)
+    int i;
+    #pragma omp parallel
     {
-      if (*(imageIn+i) < max)
-        *(imageIn+i) = 0; 
-    } 
+        #pragma omp for
+        for (i = 0; i < size_x*size_y; i++)
+        {
+            if (*(imageIn+i) < max)
+                *(imageIn+i)=0;    
+        }
+    }
 }
+
 
 //Sobel
 void
@@ -248,43 +335,44 @@ inline
 sobel (unsigned char *ImageIn, unsigned char *ImageOut, unsigned int size_x, unsigned int size_y)
 {
     //Local variables
-
+    register unsigned char s0, s1, s2, s3, s4, s5, s6, s7, s8;
     int half_kernel_size = (KERNEL_SIZE - 1) / 2;
     unsigned int c, d, acc = half_kernel_size*size_x;
     int horizontal, vertical, result;
 
     //Compute
+    #pragma omp parallel for private(s0, s1, s2, s3, s4, s5, s6, s7, acc, d, horizontal, vertical, result)
     for ( c=half_kernel_size; c<(size_y-half_kernel_size); c++ )
     {
-        sobelBlock[0] = *(ImageIn+acc-size_x+half_kernel_size-1);
-        sobelBlock[1] = *(ImageIn+acc-size_x+half_kernel_size);
-        sobelBlock[2] = *(ImageIn+acc-size_x+half_kernel_size+1);
-        sobelBlock[3] = *(ImageIn+acc+half_kernel_size-1);
-        sobelBlock[4] = *(ImageIn+acc+half_kernel_size+1);
-        sobelBlock[5] = *(ImageIn+acc+size_x+half_kernel_size-1);
-        sobelBlock[6] = *(ImageIn+acc+size_x+half_kernel_size);
-        sobelBlock[7] = *(ImageIn+acc+size_x+half_kernel_size+1);
+        acc = (half_kernel_size+c)*size_x;  
+        s0 = *(ImageIn+acc-size_x+half_kernel_size-1);
+        s1 = *(ImageIn+acc-size_x+half_kernel_size);
+        s2 = *(ImageIn+acc-size_x+half_kernel_size+1);
+        s3 = *(ImageIn+acc+half_kernel_size-1);
+        s4 = *(ImageIn+acc+half_kernel_size+1);
+        s5 = *(ImageIn+acc+size_x+half_kernel_size-1);
+        s6 = *(ImageIn+acc+size_x+half_kernel_size);
+        s7 = *(ImageIn+acc+size_x+half_kernel_size+1);
         for ( d=half_kernel_size; d<(size_x-half_kernel_size); d++ )
         {
-            int horizontal = -sobelBlock[0]-2*sobelBlock[3]-sobelBlock[5]+sobelBlock[2]+2*sobelBlock[3]+sobelBlock[7];
-            int vertical = -sobelBlock[0]-2*sobelBlock[1]-sobelBlock[2]+sobelBlock[5]+2*sobelBlock[6]+sobelBlock[7];
+            horizontal = -s0-2*s3-s5+s2+2*s4+s7;
+            vertical = -s0-2*s1-s2+s5+2*s6+s7;
             result = abs(horizontal)+abs(vertical);
             if (result > 255)
                 result = 255;
 
             *(ImageOut+acc+d) = result;
 
-            sobelBlock[0] = sobelBlock[1];
-            sobelBlock[1] = sobelBlock[2];
-            sobelBlock[5] = sobelBlock[6];
-            sobelBlock[6] = sobelBlock[7];
-            sobelBlock[2] = *(ImageIn+acc-size_x+d+2);
-            sobelBlock[3] = *(ImageIn+acc+half_kernel_size);
-            sobelBlock[4] = *(ImageIn+acc+half_kernel_size+1);
-            sobelBlock[7] = *(ImageIn+acc+size_x+half_kernel_size+2);
+            s0 = s1;
+            s1 = s2;
+            s5 = s6;
+            s6 = s7;
+            s2 = *(ImageIn+acc-size_x+d+2);
+            s3 = *(ImageIn+acc+half_kernel_size);
+            s4 = *(ImageIn+acc+half_kernel_size+1);
+            s7 = *(ImageIn+acc+size_x+half_kernel_size+2);
 
         }
-        acc += size_x;
     }
 }
 
